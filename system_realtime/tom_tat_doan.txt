@@ -1,0 +1,398 @@
+Tôi đang làm hệ thống Realtime HAR nhận dạng hành động người bằng Wi-Fi CSI.
+
+Mục tiêu hiện tại: chỉnh giao diện Web Dashboard đẹp hơn, nhưng không làm hỏng luồng realtime hiện có.
+
+====================
+1. KIẾN TRÚC HIỆN TẠI
+====================
+
+Thiết bị:
+- 3 ESP32 receiver: esp1, esp2, esp3.
+- 3 ASUS/Nexmon receiver: asus1, asus2, asus3.
+- 1 ASUS phát Wi-Fi.
+
+Luồng dữ liệu:
+
+ESP/ASUS
+→ Collection
+→ TCP JSON Lines
+→ Windows Realtime HAR Server
+→ xử lý buffer, chọn window, PCHIP, tạo tensor
+→ HTTP POST sang WSL
+→ Haar DWT + z-score + Mamba GPU
+→ trả label/confidence về Windows
+→ SQLite + WebSocket
+→ Web Dashboard.
+
+=========================
+2. PROJECT WINDOWS HIỆN TẠI
+=========================
+
+Project chính Windows:
+
+C:\Users\hoang\Downloads\ĐATN\realtime_har_wsl
+
+Các file chính:
+
+- realtime_ai_app.py
+  Nhận TCP từ ESP/ASUS, giữ buffer, trigger inference,
+  ghi SQLite, gửi WebSocket cho Dashboard.
+
+- preprocess.py
+  Xử lý realtime phía Windows:
+  chọn seq chung, nội suy PCHIP amplitude,
+  ESP/ASUS 64 subcarrier → còn 56 subcarrier.
+
+- predictor.py
+  Gửi tensor HTTP sang WSL endpoint /predict,
+  nhận label/confidence trả về.
+
+- config.py
+  Chứa MAC map, port, buffer/window/step, URL WSL.
+
+- static/index.html
+  File giao diện Dashboard cần chỉnh đẹp hơn.
+
+- realtime_log.db
+  SQLite lịch sử inference.
+
+=====================
+3. CẤU HÌNH BUFFER
+=====================
+
+Dự kiến/current config:
+
+RAW_BUFFER_SIZE = 1200
+WINDOW_SIZE = 1000
+STEP_SIZE = 100
+
+Có 6 deque riêng:
+
+esp1, esp2, esp3
+asus1, asus2, asus3
+
+ESP và ASUS là hai group độc lập:
+
+groups["esp"].pending
+groups["asus"].pending
+
+Không dùng chung pending.
+
+Một group bắt đầu inference khi:
+
+1. Cả 3 receiver cùng loại đủ ít nhất 1200 raw packet.
+2. Group không đang inference.
+3. Sau prediction trước, cả 3 receiver đều có thêm >= 100 packet.
+
+=======================
+4. CÁCH CHỌN WINDOW SEQ
+=======================
+
+Seq quay vòng 12-bit:
+
+0 → 1 → ... → 4095 → 0
+
+SEQ_MODULO = 4096
+SEQ_HALF_RANGE = 2048
+
+Logic mới mong muốn/current:
+
+- Lấy seq cuối của 3 buffer.
+- Chọn seq cuối “cũ nhất” theo modulo 4096,
+  tức receiver chậm nhất.
+- Gọi đó là end_seq chung.
+- start_seq = end_seq - 999 theo modulo.
+- Window vẫn theo chiều thời gian tăng dần:
+  start_seq → ... → end_seq.
+
+Ví dụ:
+
+esp1 cuối = 2199
+esp2 cuối = 2229
+esp3 cuối = 2219
+
+→ end_seq = 2199
+→ start_seq = 1200
+→ model dùng seq 1200 đến 2199.
+
+=================
+5. NỘI SUY PCHIP
+=================
+
+PCHIP chạy ở Windows preprocess.py.
+
+- Nội suy amplitude, không nội suy I/Q raw.
+- Packet thiếu/lỗi CSI sẽ thành missing.
+- Dự kiến giới hạn:
+  MAX_MISSING_RATIO = 0.02
+  MAX_CONSECUTIVE_MISSING = 5
+
+Với window 1000:
+
+- tối đa 20 packet mất tổng cộng;
+- tối đa 5 packet mất liên tiếp;
+- mất đầu/cuối window thì bỏ window;
+- mất quá giới hạn thì không inference.
+
+=========================
+6. WSL / GPU MODEL HIỆN TẠI
+=========================
+
+Có hai distro:
+
+- Ubuntu
+- Ubuntu-24.04
+
+QUAN TRỌNG:
+Service GPU từng chạy thật ở distro Ubuntu, tại:
+
+/home/hoang/har_inference/wsl_service
+
+Không được nhầm với Ubuntu-24.04 hoặc /mnt/c/... khi chạy Uvicorn.
+
+Cấu trúc WSL chạy thật:
+
+/home/hoang/har_inference/wsl_service
+├── wsl_inference_service.py
+└── friend_model/
+    ├── __init__.py
+    ├── model.py
+    ├── predict.py
+    ├── preprocess.py
+    └── bundle/
+        ├── esp.pt
+        └── asus.pt
+
+Bản source để sửa ở Windows:
+
+C:\Users\hoang\Downloads\ĐATN\realtime_har_wsl\wsl_service\friend_model
+
+Sau khi sửa source/model trong Windows, copy sang WSL đang chạy bằng:
+
+cp -a \
+"/mnt/c/Users/hoang/Downloads/ĐATN/realtime_har_wsl/wsl_service/friend_model/." \
+"$HOME/har_inference/wsl_service/friend_model/"
+
+==============================
+7. LƯU Ý QUAN TRỌNG predict.py
+==============================
+
+Trong friend_model/predict.py phải có:
+
+from .model import WavDualMamba
+from .preprocess import build_sample, infer_antennas, zscore
+
+BUNDLE_DIR = Path(__file__).resolve().parent / "bundle"
+
+Và:
+
+def get_default_predictor(bundle_dir=BUNDLE_DIR):
+
+Không dùng:
+
+from model import ...
+from preprocess import ...
+def get_default_predictor(bundle_dir="bundle"):
+
+Vì service import theo package:
+
+from friend_model.predict import predict_esp, predict_asus
+
+Trước đây từng gặp lỗi:
+
+No module named 'model'
+
+và:
+
+bundle 'bundle/esp.pt' not found
+
+Nguyên nhân là import/path bundle sai.
+
+============================
+8. MODEL INPUT VÀ CHUẨN HÓA
+============================
+
+Windows gửi sang WSL:
+
+ESP:
+- 3 receiver.
+- Mỗi receiver shape (1, 56, 1000).
+
+ASUS:
+- 3 receiver.
+- Mỗi receiver shape (4, 56, 1000).
+
+WSL model xử lý tiếp:
+
+raw amplitude
+→ stack 3 receiver
+→ 2-D Haar DWT
+→ HL/LH
+→ z-score
+→ WavDualMamba GPU.
+
+Model mới dùng chuẩn hóa:
+
+ESP:
+mean/std shape = (6, 28)
+
+ASUS:
+mean/std shape = (24, 28)
+
+Các mean/std nằm trong checkpoint:
+
+friend_model/bundle/esp.pt
+friend_model/bundle/asus.pt
+
+Hai file .pt mới phải đi cùng code chuẩn hóa mới.
+
+=========================
+9. NHÃN VÀ CONFIDENCE WEB
+=========================
+
+Model WSL trả sẵn JSON kiểu:
+
+{
+  "label_id": 7,
+  "label": "Run",
+  "probability": 0.9924
+}
+
+WSL map label_id sang tên nhãn bằng class_names bên trong esp.pt/asus.pt.
+
+Windows/Web không cần map lại 7 → Run.
+
+Web chỉ hiển thị trực tiếp:
+
+Action:
+- label, ví dụ Run.
+
+Confidence:
+- probability * 100, ví dụ 99.24%.
+
+Lưu ý:
+Confidence là độ tự tin của model cho window hiện tại,
+không phải accuracy tổng thể của model.
+
+HAR_LABELS bên Windows:
+
+HAR_LABELS = (
+    "Sit Down",
+    "Stand Up",
+    "Pick Up Object",
+    "Fall",
+    "Lie Still",
+    "Walk",
+    "Run",
+    "Empty Room",
+)
+
+chỉ dùng khi mock/random fallback.
+Khi model WSL chạy thật bình thường thì không dùng để map label.
+
+=====================
+10. LATENCY VÀ SQLITE
+=====================
+
+latency_ms hiện là tổng:
+
+Windows preprocess
++ PCHIP
++ HTTP Windows → WSL
++ Haar/z-score
++ GPU Mamba
++ nhận response về Windows.
+
+Không tính thời gian chờ thu đủ 1000 packet.
+
+Khi inference thành công:
+
+action = tên hành động
+confidence = số 0..1
+latency_ms = số ms
+
+Khi model/WSL lỗi:
+
+action = "predict_error"
+confidence = NULL
+latency_ms = NULL
+
+SQLite table:
+
+prediction_logs(
+  id,
+  web_updated_at,
+  source,
+  input_timestamp,
+  latency_ms,
+  action,
+  confidence
+)
+
+=====================
+11. KHỞI ĐỘNG HỆ THỐNG
+=====================
+
+Terminal 1: WSL model GPU
+
+PowerShell:
+
+wsl -d Ubuntu -- bash -lc '
+source ~/env/bin/activate
+cd ~/har_inference/wsl_service
+python -m uvicorn wsl_inference_service:app --host 0.0.0.0 --port 8001
+'
+
+Terminal 2: ESP Collection
+
+python esp_real_vs_server2server.py
+
+ESP realtime TCP port:
+
+127.0.0.1:9201
+
+Terminal 3: ASUS Collection
+
+Phải mở TCP JSON Lines cho realtime server tại:
+
+127.0.0.1:9100
+
+Terminal 4: Windows Dashboard/server
+
+cd "C:\Users\hoang\Downloads\ĐATN\realtime_har_wsl"
+.\venv\Scripts\Activate.ps1
+python -m uvicorn realtime_ai_app:app --host 0.0.0.0 --port 8000
+
+Dashboard:
+
+http://127.0.0.1:8000
+
+========================
+12. MỤC TIÊU CHAT HIỆN TẠI
+========================
+
+Tôi muốn chỉnh giao diện static/index.html cho đẹp, rõ ràng và chuyên nghiệp hơn.
+
+Yêu cầu giữ nguyên backend/API/WebSocket hiện tại.
+Không được đổi tên field JSON backend nếu không thật cần thiết.
+
+Web hiện cần tiếp tục hiển thị:
+
+- ESP status.
+- ASUS status.
+- Action.
+- Confidence.
+- Latency.
+- Input timestamp.
+- Web updated time.
+- Số thiết bị online / tổng thiết bị.
+- Prediction history.
+- Camera nếu đang có.
+
+Muốn giao diện hiện đại hơn, dễ nhìn trên màn hình desktop:
+- card ESP/ASUS rõ ràng;
+- phân biệt trạng thái online/waiting/error;
+- action nổi bật;
+- confidence dạng phần trăm/progress bar;
+- lịch sử prediction dễ đọc;
+- không làm vỡ WebSocket hoặc dữ liệu realtime.

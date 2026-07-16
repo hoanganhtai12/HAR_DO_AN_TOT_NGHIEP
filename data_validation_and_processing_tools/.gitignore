@@ -1,0 +1,81 @@
+# ==========================================
+# Các thư mục cụ thể được yêu cầu bỏ qua
+# ==========================================
+.venv/
+doc/
+data/
+image/
+csi_tool/__pycache__/
+
+# ==========================================
+# Cấu hình tiêu chuẩn cho dự án Python
+# ==========================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit testing / coverage reports
+htmlcov/
+.toml
+.cache
+.pytest_cache/
+.noscript_cache/
+.coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ==========================================
+# Editor / IDE / OS Specific Files
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,354 @@
+{
+  "device": "asus",
+  "seed": 42,
+  "epochs": 30,
+  "n_train": 5120,
+  "n_test": 1280,
+  "num_classes": 8,
+  "class_names": [
+    "Sit Down",
+    "Stand Up",
+    "Pick Up Object",
+    "Fall",
+    "Lie Still",
+    "Walk",
+    "Run",
+    "Empty Room"
+  ],
+  "test_acc_last": 0.992969,
+  "test_f1_macro_last": 0.992971,
+  "test_acc_best": 0.99375,
+  "test_f1_macro_best": 0.99375,
+  "macro_precision": 0.993013,
+  "macro_recall": 0.992975,
+  "per_class": [
+    {
+      "cls": 0,
+      "name": "Sit Down",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 160
+    },
+    {
+      "cls": 1,
+      "name": "Stand Up",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 160
+    },
+    {
+      "cls": 2,
+      "name": "Pick Up Object",
+      "precision": 0.9815,
+      "recall": 0.9938,
+      "f1": 0.9876,
+      "support": 160
+    },
+    {
+      "cls": 3,
+      "name": "Fall",
+      "precision": 1.0,
+      "recall": 0.9938,
+      "f1": 0.9969,
+      "support": 160
+    },
+    {
+      "cls": 4,
+      "name": "Lie Still",
+      "precision": 0.9874,
+      "recall": 0.9812,
+      "f1": 0.9843,
+      "support": 160
+    },
+    {
+      "cls": 5,
+      "name": "Walk",
+      "precision": 0.9815,
+      "recall": 0.9938,
+      "f1": 0.9876,
+      "support": 160
+    },
+    {
+      "cls": 6,
+      "name": "Run",
+      "precision": 0.9937,
+      "recall": 0.9812,
+      "f1": 0.9874,
+      "support": 160
+    },
+    {
+      "cls": 7,
+      "name": "Empty Room",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 160
+    }
+  ],
+  "confusion_matrix": [
+    [
+      160,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      160,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      159,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      159,
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      3,
+      0,
+      157,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      159,
+      1,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      3,
+      157,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      160
+    ]
+  ],
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.54532,
+      "test_acc": 0.563281,
+      "test_f1": 0.554417
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.887291,
+      "test_acc": 0.661719,
+      "test_f1": 0.655085
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.664327,
+      "test_acc": 0.753125,
+      "test_f1": 0.752292
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.48552,
+      "test_acc": 0.83125,
+      "test_f1": 0.831429
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.365372,
+      "test_acc": 0.889062,
+      "test_f1": 0.888151
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.228837,
+      "test_acc": 0.93125,
+      "test_f1": 0.930595
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.13711,
+      "test_acc": 0.951562,
+      "test_f1": 0.951701
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.088851,
+      "test_acc": 0.970313,
+      "test_f1": 0.970311
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.066209,
+      "test_acc": 0.967187,
+      "test_f1": 0.967062
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.04783,
+      "test_acc": 0.978125,
+      "test_f1": 0.978134
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.048517,
+      "test_acc": 0.978906,
+      "test_f1": 0.978937
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.024008,
+      "test_acc": 0.986719,
+      "test_f1": 0.986713
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.017228,
+      "test_acc": 0.984375,
+      "test_f1": 0.984352
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.016839,
+      "test_acc": 0.989062,
+      "test_f1": 0.989061
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.014239,
+      "test_acc": 0.988281,
+      "test_f1": 0.988278
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.01092,
+      "test_acc": 0.992188,
+      "test_f1": 0.992192
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.006676,
+      "test_acc": 0.990625,
+      "test_f1": 0.990627
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.003841,
+      "test_acc": 0.9875,
+      "test_f1": 0.987487
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.002909,
+      "test_acc": 0.989844,
+      "test_f1": 0.989843
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.001481,
+      "test_acc": 0.991406,
+      "test_f1": 0.991404
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.004038,
+      "test_acc": 0.992969,
+      "test_f1": 0.992968
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.00013,
+      "test_acc": 0.992188,
+      "test_f1": 0.992187
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.000199,
+      "test_acc": 0.992969,
+      "test_f1": 0.992971
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.00012,
+      "test_acc": 0.992188,
+      "test_f1": 0.992187
+    },
+    {
+      "epoch": 25,
+      "train_loss": 5.1e-05,
+      "test_acc": 0.99375,
+      "test_f1": 0.99375
+    },
+    {
+      "epoch": 26,
+      "train_loss": 7.7e-05,
+      "test_acc": 0.992969,
+      "test_f1": 0.992971
+    },
+    {
+      "epoch": 27,
+      "train_loss": 2.5e-05,
+      "test_acc": 0.992969,
+      "test_f1": 0.992971
+    },
+    {
+      "epoch": 28,
+      "train_loss": 3.7e-05,
+      "test_acc": 0.992969,
+      "test_f1": 0.992971
+    },
+    {
+      "epoch": 29,
+      "train_loss": 3.9e-05,
+      "test_acc": 0.992969,
+      "test_f1": 0.992971
+    },
+    {
+      "epoch": 30,
+      "train_loss": 4.2e-05,
+      "test_acc": 0.992969,
+      "test_f1": 0.992971
+    }
+  ]
+}

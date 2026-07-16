@@ -1,0 +1,86 @@
+{
+    "database_root": "data",
+    "debug": false,
+    "data_structure": {
+        "sitdown": {
+            "idx": 1,
+            "room": [1],
+            "session": [1],
+            "user": [4],
+            "pos": [4],
+            "setup": [1],
+            "dir": 0,
+            "repeat": [1,2,3,4,5,6,7,8,9,10]
+        },
+        "standup": {
+            "idx": 2,
+            "room": [1],
+            "session": [1],
+            "user": [4],
+            "pos": [4],
+            "setup": [1],
+            "dir": 0,
+            "repeat": [1,2,3,4,5,6,7,8,9,10]
+        },
+        "pickup": {
+            "idx": 3,
+            "room": [],
+            "session": [1],
+            "user": [1,2,4,5,6,7,8],
+            "pos": [1,2,3,4,5,6,7,8],
+            "setup": [1,2],
+            "dir": 0,
+            "repeat": [1,2,3,4,5]
+        },
+        "fall": {
+            "idx": 4,
+            "room": [],
+            "session": [1],
+            "user": [1,2,4,5,6,7,8],
+            "pos": [1,2,3,4,5,6,7,8],
+            "setup": [1,2],
+            "dir": 1,
+            "repeat": [1,2,3,4,5]
+        },
+        "liestill": {
+            "idx": 5,
+            "room": [],
+            "session": [1],
+            "user": [1,2,4,5,6,7,8],
+            "pos": [1,2,3,4,5,6,7,8],
+            "setup": [1,2],
+            "dir": 1,
+            "repeat": [1,2,3,4,5]
+        },
+        "walk": {
+            "idx": 6,
+            "room": [],
+            "session": [1],
+            "user": [1,2,4,6],
+            "pos": [1,2,3,4,5,6,7,8],
+            "setup": [1,2],
+            "dir": 1,
+            "repeat": [1,2,3,4,5]
+        },
+        "run": {
+            "idx": 7,
+            "room": [],
+            "session": [1],
+            "user": [2,4,6,8],
+            "pos": [1,2,3,4,5,6,7,8],
+            "setup": [1,2],
+            "dir": 1,
+            "repeat": [1,2,3,4,5]
+        },
+        "emptyroom": {
+            "idx": 8,
+            "room": [],
+            "session": [1],
+            "user": [1,2,3,4,5],
+            "pos": [1,2,3,4,5,6,7,8],
+            "setup": [1],
+            "dir": 0,
+            "repeat": [1,2,3,4,5,6,7,8,9,10]
+        }
+    }
+}

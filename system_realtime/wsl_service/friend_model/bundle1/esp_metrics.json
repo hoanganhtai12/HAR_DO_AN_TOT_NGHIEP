@@ -1,0 +1,354 @@
+{
+  "device": "esp",
+  "seed": 42,
+  "epochs": 30,
+  "n_train": 5120,
+  "n_test": 1280,
+  "num_classes": 8,
+  "class_names": [
+    "Sit Down",
+    "Stand Up",
+    "Pick Up Object",
+    "Fall",
+    "Lie Still",
+    "Walk",
+    "Run",
+    "Empty Room"
+  ],
+  "test_acc_last": 0.996094,
+  "test_f1_macro_last": 0.996094,
+  "test_acc_best": 0.997656,
+  "test_f1_macro_best": 0.997656,
+  "macro_precision": 0.996112,
+  "macro_recall": 0.996112,
+  "per_class": [
+    {
+      "cls": 0,
+      "name": "Sit Down",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 160
+    },
+    {
+      "cls": 1,
+      "name": "Stand Up",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 160
+    },
+    {
+      "cls": 2,
+      "name": "Pick Up Object",
+      "precision": 0.9937,
+      "recall": 0.9875,
+      "f1": 0.9906,
+      "support": 160
+    },
+    {
+      "cls": 3,
+      "name": "Fall",
+      "precision": 0.9876,
+      "recall": 0.9938,
+      "f1": 0.9907,
+      "support": 160
+    },
+    {
+      "cls": 4,
+      "name": "Lie Still",
+      "precision": 0.9938,
+      "recall": 0.9938,
+      "f1": 0.9938,
+      "support": 160
+    },
+    {
+      "cls": 5,
+      "name": "Walk",
+      "precision": 1.0,
+      "recall": 0.9938,
+      "f1": 0.9969,
+      "support": 160
+    },
+    {
+      "cls": 6,
+      "name": "Run",
+      "precision": 0.9938,
+      "recall": 1.0,
+      "f1": 0.9969,
+      "support": 160
+    },
+    {
+      "cls": 7,
+      "name": "Empty Room",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 160
+    }
+  ],
+  "confusion_matrix": [
+    [
+      160,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      160,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      158,
+      2,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      159,
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      159,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      159,
+      1,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      160,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      160
+    ]
+  ],
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.677232,
+      "test_acc": 0.492969,
+      "test_f1": 0.449443
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.035145,
+      "test_acc": 0.625,
+      "test_f1": 0.599863
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.74843,
+      "test_acc": 0.704688,
+      "test_f1": 0.683861
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.597031,
+      "test_acc": 0.770312,
+      "test_f1": 0.761297
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.451124,
+      "test_acc": 0.796094,
+      "test_f1": 0.763885
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.356607,
+      "test_acc": 0.830469,
+      "test_f1": 0.812924
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.2896,
+      "test_acc": 0.896875,
+      "test_f1": 0.895885
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.18438,
+      "test_acc": 0.942187,
+      "test_f1": 0.942227
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.111711,
+      "test_acc": 0.960156,
+      "test_f1": 0.960136
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.067923,
+      "test_acc": 0.972656,
+      "test_f1": 0.972621
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.051894,
+      "test_acc": 0.96875,
+      "test_f1": 0.96873
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.033905,
+      "test_acc": 0.983594,
+      "test_f1": 0.98359
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.024006,
+      "test_acc": 0.979688,
+      "test_f1": 0.979648
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.03093,
+      "test_acc": 0.979688,
+      "test_f1": 0.979685
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.01935,
+      "test_acc": 0.98125,
+      "test_f1": 0.981244
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.019365,
+      "test_acc": 0.982812,
+      "test_f1": 0.98281
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.012637,
+      "test_acc": 0.985938,
+      "test_f1": 0.985942
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.007793,
+      "test_acc": 0.990625,
+      "test_f1": 0.990623
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.005467,
+      "test_acc": 0.986719,
+      "test_f1": 0.986715
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.004935,
+      "test_acc": 0.992969,
+      "test_f1": 0.992969
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.002213,
+      "test_acc": 0.991406,
+      "test_f1": 0.991406
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.001606,
+      "test_acc": 0.995313,
+      "test_f1": 0.995312
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.000797,
+      "test_acc": 0.997656,
+      "test_f1": 0.997656
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.00062,
+      "test_acc": 0.996875,
+      "test_f1": 0.996875
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.000598,
+      "test_acc": 0.992188,
+      "test_f1": 0.992186
+    },
+    {
+      "epoch": 26,
+      "train_loss": 0.00032,
+      "test_acc": 0.994531,
+      "test_f1": 0.994531
+    },
+    {
+      "epoch": 27,
+      "train_loss": 0.000194,
+      "test_acc": 0.995313,
+      "test_f1": 0.995312
+    },
+    {
+      "epoch": 28,
+      "train_loss": 0.000148,
+      "test_acc": 0.996094,
+      "test_f1": 0.996094
+    },
+    {
+      "epoch": 29,
+      "train_loss": 0.000147,
+      "test_acc": 0.996094,
+      "test_f1": 0.996094
+    },
+    {
+      "epoch": 30,
+      "train_loss": 0.000128,
+      "test_acc": 0.996094,
+      "test_f1": 0.996094
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+# Torch 2.7 + CUDA + causal-conv1d + mamba-ssm đã cài theo hướng dẫn bạn bạn.
+# Cài bổ sung để chạy API service:
+fastapi
+uvicorn[standard]

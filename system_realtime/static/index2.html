@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Realtime HAR Dashboard</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --canvas: #f4f7fb;
+            --surface: #ffffff;
+            --surface-soft: #f9fbff;
+            --ink: #16213a;
+            --muted: #6f7b92;
+            --line: #e4eaf3;
+            --blue: #2e6cf6;
+            --blue-dark: #1e4fcb;
+            --blue-soft: #edf3ff;
+            --violet: #8057e8;
+            --violet-dark: #6034c7;
+            --violet-soft: #f4efff;
+            --green: #15915a;
+            --green-soft: #e9f8f0;
+            --amber: #b96c10;
+            --amber-soft: #fff4e4;
+            --red: #ce4555;
+            --red-soft: #fff0f2;
+            --slate-soft: #f0f3f8;
+            --shadow: 0 18px 44px rgba(37, 57, 94, .09);
+            --shadow-soft: 0 8px 24px rgba(37, 57, 94, .065);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { min-width: 320px; }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 4% 3%, rgba(46, 108, 246, .11), transparent 22rem),
+                radial-gradient(circle at 97% 12%, rgba(128, 87, 232, .12), transparent 25rem),
+                var(--canvas);
+        }
+
+        button, select { font: inherit; }
+        h1, h2, h3, p { margin-top: 0; }
+
+        .app-shell {
+            width: min(1720px, calc(100% - 36px));
+            margin: 20px auto 30px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 16px;
+        }
+
+        .brand-lockup { min-width: 0; }
+
+        .eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin: 0 0 5px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: .11em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            content: "";
+            background: linear-gradient(135deg, var(--blue), var(--violet));
+            box-shadow: 0 0 0 4px rgba(46, 108, 246, .10);
+        }
+
+        h1 {
+            margin-bottom: 0;
+            font-size: clamp(25px, 3vw, 34px);
+            letter-spacing: -.045em;
+        }
+
+        h2 {
+            margin-bottom: 0;
+            font-size: 18px;
+            letter-spacing: -.025em;
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 9px;
+            flex-wrap: wrap;
+        }
+
+        .header-note,
+        .ws-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 37px;
+            border: 1px solid rgba(218, 225, 238, .95);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .82);
+            box-shadow: var(--shadow-soft);
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .header-note { padding: 0 12px; }
+
+        .ws-pill { gap: 9px; padding: 0 13px; }
+
+        .ws-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #a2adbc;
+        }
+
+        .ws-pill.connected { color: #087a47; border-color: #cdeedc; background: #f4fdf8; }
+        .ws-pill.connected .ws-dot { background: var(--green); box-shadow: 0 0 0 4px rgba(21, 145, 90, .12); }
+        .ws-pill.connecting { color: #9a5d13; border-color: #f1d6ae; background: #fffaf3; }
+        .ws-pill.connecting .ws-dot { background: var(--amber); box-shadow: 0 0 0 4px rgba(185, 108, 16, .12); }
+        .ws-pill.error,
+        .ws-pill.disconnected { color: #b52f43; border-color: #f2cbd1; background: #fff8f9; }
+        .ws-pill.error .ws-dot,
+        .ws-pill.disconnected .ws-dot { background: var(--red); box-shadow: 0 0 0 4px rgba(206, 69, 85, .12); }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.78fr) minmax(360px, .92fr);
+            gap: 17px;
+            align-items: stretch;
+        }
+
+        .left-stack {
+            display: grid;
+            grid-template-rows: minmax(360px, 1.18fr) minmax(280px, .82fr);
+            min-height: 755px;
+            gap: 17px;
+        }
+
+        .card {
+            overflow: hidden;
+            border: 1px solid rgba(219, 226, 238, .98);
+            border-radius: 21px;
+            background: rgba(255, 255, 255, .94);
+            box-shadow: var(--shadow);
+        }
+
+        .card-heading {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 15px;
+        }
+
+        .card-subtitle {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.48;
+        }
+
+        /* Camera */
+        .camera-card { display: flex; min-height: 0; padding: 12px; }
+
+        .camera-layout {
+            display: grid;
+            grid-template-columns: 250px minmax(0, 1fr);
+            flex: 1;
+            min-height: 0;
+            gap: 13px;
+        }
+
+        .camera-controls {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            padding: 17px;
+            border: 1px solid #dce6f5;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #f8fbff 0%, #f1f6ff 100%);
+        }
+
+        .camera-kicker {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            color: var(--blue-dark);
+            background: var(--blue-soft);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
+
+        .camera-title-block h2 { margin-bottom: 4px; }
+
+        .camera-control-divider {
+            margin: 15px 0 13px;
+            border: 0;
+            border-top: 1px solid #dce6f5;
+        }
+
+        .select-wrap label {
+            display: block;
+            margin-bottom: 7px;
+            color: #40506a;
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: .035em;
+            text-transform: uppercase;
+        }
+
+        select, button { height: 40px; border-radius: 10px; }
+
+        select {
+            width: 100%;
+            padding: 0 11px;
+            border: 1px solid #d4deee;
+            outline: none;
+            color: var(--ink);
+            background: #fff;
+            font-size: 13px;
+        }
+
+        select:focus { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(46, 108, 246, .11); }
+
+        .camera-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 9px;
+            margin-top: 10px;
+        }
+
+        button {
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-weight: 850;
+            transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+        }
+        button:hover { transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+            box-shadow: 0 9px 16px rgba(46, 108, 246, .23);
+        }
+        .btn-secondary { border-color: #d2dceb; color: #4f5f78; background: rgba(255, 255, 255, .86); }
+
+        .camera-status-box {
+            margin-top: auto;
+            padding-top: 13px;
+            border-top: 1px solid #dce6f5;
+        }
+        .camera-status-box strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #42516a;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: .045em;
+            text-transform: uppercase;
+        }
+        .camera-status-row { display: grid; gap: 5px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+        .error { color: var(--red); font-weight: 750; overflow-wrap: anywhere; }
+
+        .camera-view-pane { display: flex; min-width: 0; min-height: 0; }
+
+        .video-stage {
+            position: relative;
+            width: 100%;
+            min-height: 0;
+            overflow: hidden;
+            border: 1px solid #172845;
+            border-radius: 16px;
+            background:
+                radial-gradient(circle at 50% 35%, rgba(98, 131, 205, .25), transparent 36%),
+                linear-gradient(145deg, #13203a, #080f20);
+        }
+        .video-stage::before {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 1;
+            padding: 5px 8px;
+            border: 1px solid rgba(255, 255, 255, .13);
+            border-radius: 999px;
+            color: #dce7fd;
+            background: rgba(8, 15, 32, .55);
+            content: "CAMERA LIVE";
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .08em;
+            backdrop-filter: blur(8px);
+        }
+        video { display: block; width: 100%; height: 100%; min-height: 0; object-fit: contain; background: #080f20; }
+        .video-empty { position: absolute; inset: 0; display: grid; place-items: center; color: #d4def2; text-align: center; pointer-events: none; }
+        .video-empty.hidden { display: none; }
+        .camera-icon {
+            display: grid;
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 10px;
+            place-items: center;
+            border: 1px solid rgba(214, 227, 253, .22);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, .06);
+            font-size: 23px;
+        }
+
+        /* History */
+        .history-card { display: flex; flex-direction: column; min-height: 0; padding: 19px; }
+        .history-count {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 10px;
+            border: 1px solid #e1e7f0;
+            border-radius: 999px;
+            color: #526079;
+            background: #f7f9fc;
+            font-size: 11px;
+            font-weight: 850;
+        }
+        .table-wrap { flex: 1; min-height: 0; overflow: auto; border: 1px solid #e9eef6; border-radius: 13px; }
+        table { width: 100%; min-width: 710px; border-collapse: collapse; background: #fff; }
+        th, td { padding: 10px 12px; border-bottom: 1px solid #edf1f7; text-align: left; font-size: 12px; white-space: nowrap; }
+        th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            color: #78859b;
+            background: #fbfcff;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+        tbody tr:last-child td { border-bottom: 0; }
+        tbody tr:hover { background: #f9fbff; }
+        .history-action { color: #26344d; font-weight: 800; }
+        .history-action.error { color: var(--red); }
+        .source-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 49px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .045em;
+        }
+        .source-badge.esp { color: var(--blue-dark); background: var(--blue-soft); }
+        .source-badge.asus { color: var(--violet-dark); background: var(--violet-soft); }
+        .confidence-mini { display: inline-flex; align-items: center; gap: 7px; }
+        .confidence-mini-track { width: 38px; height: 5px; overflow: hidden; border-radius: 999px; background: #eaf0f8; }
+        .confidence-mini-fill { display: block; height: 100%; border-radius: inherit; background: var(--blue); }
+        .empty-history td { padding: 33px 12px; color: var(--muted); text-align: center; white-space: normal; }
+
+        /* AI result */
+        .results-panel { display: flex; flex-direction: column; min-height: 755px; padding: 18px; }
+        .results-panel .card-heading { align-items: center; margin-bottom: 14px; }
+        .result-stack { display: grid; flex: 1; min-height: 0; grid-template-rows: 1fr 1fr; gap: 14px; }
+        .result-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+            padding: 17px;
+            border: 1px solid #e5ebf4;
+            border-radius: 18px;
+            background: linear-gradient(150deg, #fff, #fbfdff);
+        }
+        .result-card::before { position: absolute; inset: 0 auto auto 0; width: 100%; height: 5px; content: ""; background: var(--blue); }
+        .result-card.asus { background: linear-gradient(150deg, #fff, #fdfbff); }
+        .result-card.asus::before { background: var(--violet); }
+        .result-card.is-error { border-color: #f2c9cf; background: linear-gradient(150deg, #fff, #fff7f8); }
+        .result-card.is-error::before { background: var(--red); }
+
+        .result-label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 4px; }
+        .result-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+        .result-mark { width: 9px; height: 9px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 5px rgba(46, 108, 246, .11); }
+        .asus .result-mark { background: var(--violet); box-shadow: 0 0 0 5px rgba(128, 87, 232, .12); }
+        .is-error .result-mark { background: var(--red); box-shadow: 0 0 0 5px rgba(206, 69, 85, .12); }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 25px;
+            padding: 0 9px;
+            border-radius: 999px;
+            background: var(--slate-soft);
+            color: #6f7b92;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .055em;
+            text-transform: uppercase;
+        }
+        .status-chip.online { color: #087a47; background: var(--green-soft); }
+        .status-chip.partial { color: #a45e10; background: var(--amber-soft); }
+        .status-chip.waiting { color: #6f7b92; background: var(--slate-soft); }
+        .status-chip.error { color: #b92f42; background: var(--red-soft); }
+
+        .action-area { display: grid; flex: 1; min-height: 76px; place-items: center; padding: 9px 0 4px; text-align: center; }
+        .action-caption { margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+        .action { max-width: 100%; overflow: hidden; color: #18243c; font-size: clamp(27px, 2.3vw, 41px); font-weight: 950; letter-spacing: -.055em; text-overflow: ellipsis; white-space: nowrap; }
+        .is-error .action { color: var(--red); font-size: clamp(22px, 1.8vw, 31px); }
+
+        .confidence-block { margin-bottom: 11px; padding: 11px 12px; border: 1px solid #e9eef6; border-radius: 13px; background: rgba(255, 255, 255, .84); }
+        .confidence-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+        .confidence-label { color: #6a768c; font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+        .confidence-value { color: #26344d; font-size: 15px; font-weight: 900; }
+        .confidence-track { height: 8px; margin-top: 9px; overflow: hidden; border-radius: 999px; background: #eaf0f8; }
+        .confidence-fill { width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3b7aff, var(--blue)); transition: width .38s ease; }
+        .asus .confidence-fill { background: linear-gradient(90deg, #a27af3, var(--violet)); }
+        .is-error .confidence-fill { background: var(--red); }
+
+        .group-health { display: flex; align-items: center; gap: 8px; margin: 0 0 11px; color: #607088; font-size: 11px; font-weight: 750; }
+        .device-dots { display: inline-flex; align-items: center; gap: 4px; }
+        .device-dot { width: 8px; height: 8px; border-radius: 50%; background: #d6dee9; }
+        .device-dot.online { background: var(--green); box-shadow: 0 0 0 3px rgba(21, 145, 90, .10); }
+        .device-dot.partial { background: var(--amber); }
+
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .metric { min-width: 0; padding: 9px 10px; border: 1px solid #edf1f7; border-radius: 11px; background: rgba(255, 255, 255, .82); }
+        .metric.wide { grid-column: span 2; }
+        .metric-label { display: block; overflow: hidden; margin-bottom: 4px; color: #7d899b; font-size: 9px; font-weight: 900; letter-spacing: .055em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+        .metric-value { display: block; overflow: hidden; color: #33415a; font-size: 12px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+
+        @media (max-width: 1120px) {
+            .dashboard-layout { grid-template-columns: 1fr; }
+            .left-stack, .results-panel { min-height: unset; }
+            .results-panel { min-height: 460px; }
+            .result-stack { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+        }
+
+        @media (max-width: 700px) {
+            .app-shell { width: min(100% - 22px, 1720px); margin-top: 12px; }
+            .page-header { align-items: flex-start; flex-direction: column; }
+            .header-meta { justify-content: flex-start; }
+            .camera-layout { grid-template-columns: 1fr; }
+            .camera-controls { min-height: unset; }
+            .camera-status-box { margin-top: 15px; }
+            .video-stage { min-height: 240px; aspect-ratio: 16 / 9; }
+            .left-stack { grid-template-rows: auto minmax(270px, auto); }
+            .history-card { padding: 15px; }
+            .result-stack { grid-template-columns: 1fr; grid-template-rows: auto auto; }
+            .result-card { min-height: 335px; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .metric.wide { grid-column: span 1; }
+        }
+
+        /* Desktop full-screen: các bảng tự cuộn thay vì cả trang cuộn. */
+        @media (min-width: 1121px) {
+            html, body { height: 100%; }
+            body { overflow: hidden; }
+            .app-shell { display: grid; grid-template-rows: auto minmax(0, 1fr); width: calc(100vw - 44px); max-width: 1920px; height: calc(100vh - 28px); margin: 14px auto; }
+            .page-header { margin-bottom: 12px; }
+            .dashboard-layout, .left-stack, .results-panel, .camera-card, .history-card, .camera-layout, .camera-view-pane, .video-stage, video, .table-wrap { min-height: 0; }
+            .dashboard-layout { grid-template-columns: minmax(0, 2.0fr) minmax(370px, .95fr); gap: 15px; }
+            .left-stack { grid-template-rows: minmax(0, 1.06fr) minmax(0, .94fr); gap: 15px; }
+            .results-panel { padding: 16px; }
+            .history-card { padding: 17px; }
+            .result-stack { gap: 12px; }
+            .result-card { padding: 15px; }
+        }
+
+        @media (min-width: 1121px) and (max-height: 830px) {
+            .app-shell { height: calc(100vh - 16px); margin: 8px auto; }
+            .page-header { margin-bottom: 8px; }
+            .eyebrow { margin-bottom: 2px; font-size: 10px; }
+            h1 { font-size: 25px; }
+            h2 { font-size: 16px; }
+            .card-subtitle { font-size: 11px; }
+            .camera-controls { padding: 13px; }
+            .camera-layout { grid-template-columns: 225px minmax(0, 1fr); gap: 11px; }
+            .camera-control-divider { margin: 10px 0; }
+            .camera-actions { margin-top: 8px; }
+            select, button { height: 36px; }
+            .action-area { min-height: 49px; padding: 4px 0; }
+            .confidence-block { margin-bottom: 8px; padding: 8px 10px; }
+            .confidence-track { height: 6px; margin-top: 6px; }
+            .group-health { margin-bottom: 8px; }
+            .metric { padding: 7px 9px; }
+            .metric-label { margin-bottom: 2px; }
+            th, td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="app-shell">
+        <header class="page-header">
+            <div class="brand-lockup">
+                <p class="eyebrow">Realtime CSI Activity Recognition</p>
+                <h1>Realtime HAR Dashboard</h1>
+            </div>
+            <div class="header-meta">
+                <span class="header-note">3 ESP + 3 ASUS receivers</span>
+                <div id="wsPill" class="ws-pill connecting" aria-live="polite">
+                    <span class="ws-dot"></span>
+                    <span id="wsStatus">Đang kết nối WebSocket...</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="dashboard-layout">
+            <div class="left-stack">
+                <section class="card camera-card">
+                    <div class="camera-layout">
+                        <aside class="camera-controls" aria-label="Điều khiển camera">
+                            <span class="camera-kicker">Live observation</span>
+                            <div class="camera-title-block">
+                                <h2>Camera Realtime</h2>
+                                <p class="card-subtitle">Theo dõi hoạt động thực tế song song với kết quả dự đoán.</p>
+                            </div>
+
+                            <hr class="camera-control-divider" />
+
+                            <div class="select-wrap">
+                                <label for="cameraSelect">Camera hiển thị</label>
+                                <select id="cameraSelect" aria-label="Chọn camera hiển thị"></select>
+                            </div>
+
+                            <div class="camera-actions">
+                                <button id="openCameraBtn" class="btn-primary" type="button">Mở</button>
+                                <button id="stopCameraBtn" class="btn-secondary" type="button">Tắt</button>
+                            </div>
+
+                            <div class="camera-status-box">
+                                <strong>Trạng thái camera</strong>
+                                <div class="camera-status-row">
+                                    <span id="cameraStatus">Chưa mở camera.</span>
+                                    <span id="cameraError" class="error"></span>
+                                </div>
+                            </div>
+                        </aside>
+
+                        <div class="camera-view-pane">
+                            <div class="video-stage">
+                                <video id="camera" autoplay playsinline muted></video>
+                                <div id="videoEmpty" class="video-empty">
+                                    <div>
+                                        <div class="camera-icon">◉</div>
+                                        <strong>Camera chưa được mở</strong>
+                                        <p class="card-subtitle" style="color:#acb9d2; margin:6px 0 0;">Chọn camera rồi nhấn “Mở”.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card history-card">
+                    <div class="card-heading">
+                        <div>
+                            <h2>Prediction History</h2>
+                            <p class="card-subtitle">Các cửa sổ dự đoán mới nhất được ghi từ hai nhóm CSI.</p>
+                        </div>
+                        <span id="historyCount" class="history-count">0 bản ghi</span>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cập nhật web</th>
+                                    <th>Nguồn</th>
+                                    <th>Input timestamp</th>
+                                    <th>Action</th>
+                                    <th>Confidence</th>
+                                    <th>Latency</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyBody">
+                                <tr class="empty-history"><td colspan="6">Chưa có dữ liệu dự đoán.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="card results-panel">
+                <div class="card-heading">
+                    <div>
+                        <h2>AI Result</h2>
+                        <p class="card-subtitle">Kết quả realtime của hai pipeline CSI độc lập.</p>
+                    </div>
+                </div>
+
+                <div class="result-stack">
+                    <article id="asusResultCard" class="result-card asus">
+                        <div class="result-label-row">
+                            <div class="result-label"><span class="result-mark"></span>ASUS</div>
+                            <span id="asusStatus" class="status-chip waiting">waiting</span>
+                        </div>
+
+                        <div class="action-area">
+                            <div>
+                                <div class="action-caption">Predicted action</div>
+                                <div class="action" id="asusAction">--</div>
+                            </div>
+                        </div>
+
+                        <div class="confidence-block">
+                            <div class="confidence-head">
+                                <span class="confidence-label">Confidence</span>
+                                <span id="asusConfidence" class="confidence-value">--</span>
+                            </div>
+                            <div class="confidence-track" aria-label="ASUS confidence">
+                                <div id="asusConfidenceBar" class="confidence-fill"></div>
+                            </div>
+                        </div>
+
+                        <div class="group-health">
+                            <span id="asusDeviceDots" class="device-dots" aria-label="Trạng thái thiết bị ASUS"></span>
+                            <span id="asusOnlineDevices">0/3</span>
+                            <span>thiết bị online</span>
+                        </div>
+
+                        <div class="metrics-grid">
+                            <div class="metric">
+                                <span class="metric-label">Latency</span>
+                                <span class="metric-value" id="asusLatency">--</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Prediction state</span>
+                                <span class="metric-value" id="asusPending">Waiting</span>
+                            </div>
+                            <div class="metric wide">
+                                <span class="metric-label">Cập nhật web</span>
+                                <span class="metric-value" id="asusUpdatedAt">--</span>
+                            </div>
+                            <div class="metric wide">
+                                <span class="metric-label">Input timestamp</span>
+                                <span class="metric-value" id="asusInputTimestamp">--</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article id="espResultCard" class="result-card esp">
+                        <div class="result-label-row">
+                            <div class="result-label"><span class="result-mark"></span>ESP32</div>
+                            <span id="espStatus" class="status-chip waiting">waiting</span>
+                        </div>
+
+                        <div class="action-area">
+                            <div>
+                                <div class="action-caption">Predicted action</div>
+                                <div class="action" id="espAction">--</div>
+                            </div>
+                        </div>
+
+                        <div class="confidence-block">
+                            <div class="confidence-head">
+                                <span class="confidence-label">Confidence</span>
+                                <span id="espConfidence" class="confidence-value">--</span>
+                            </div>
+                            <div class="confidence-track" aria-label="ESP confidence">
+                                <div id="espConfidenceBar" class="confidence-fill"></div>
+                            </div>
+                        </div>
+
+                        <div class="group-health">
+                            <span id="espDeviceDots" class="device-dots" aria-label="Trạng thái thiết bị ESP"></span>
+                            <span id="espOnlineDevices">0/3</span>
+                            <span>thiết bị online</span>
+                        </div>
+
+                        <div class="metrics-grid">
+                            <div class="metric">
+                                <span class="metric-label">Latency</span>
+                                <span class="metric-value" id="espLatency">--</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Prediction state</span>
+                                <span class="metric-value" id="espPending">Waiting</span>
+                            </div>
+                            <div class="metric wide">
+                                <span class="metric-label">Cập nhật web</span>
+                                <span class="metric-value" id="espUpdatedAt">--</span>
+                            </div>
+                            <div class="metric wide">
+                                <span class="metric-label">Input timestamp</span>
+                                <span class="metric-value" id="espInputTimestamp">--</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </aside>
+        </section>
+    </main>
+
+    <script>
+        const wsStatus = document.getElementById("wsStatus");
+        const wsPill = document.getElementById("wsPill");
+        const cameraSelect = document.getElementById("cameraSelect");
+        const cameraVideo = document.getElementById("camera");
+        const videoEmpty = document.getElementById("videoEmpty");
+        const cameraError = document.getElementById("cameraError");
+        const cameraStatus = document.getElementById("cameraStatus");
+        const openCameraBtn = document.getElementById("openCameraBtn");
+        const stopCameraBtn = document.getElementById("stopCameraBtn");
+        const historyCount = document.getElementById("historyCount");
+
+        let currentCameraStream = null;
+        let availableCameras = [];
+
+        function fmtValue(value, fallback = "--") {
+            return value === null || value === undefined || value === "" ? fallback : value;
+        }
+
+        function toFiniteNumber(value) {
+            const numeric = Number(value);
+            return Number.isFinite(numeric) ? numeric : null;
+        }
+
+        function fmtConfidence(value) {
+            const number = toFiniteNumber(value);
+            return number === null ? "--" : `${(number * 100).toFixed(1)}%`;
+        }
+
+        function confidencePercent(value) {
+            const number = toFiniteNumber(value);
+            return number === null ? 0 : Math.max(0, Math.min(100, number * 100));
+        }
+
+        function fmtLatency(value) {
+            const number = toFiniteNumber(value);
+            return number === null ? "--" : `${number.toFixed(2)} ms`;
+        }
+
+        function setText(id, value, fallback = "--") {
+            const element = document.getElementById(id);
+            if (element) element.textContent = fmtValue(value, fallback);
+        }
+
+        function setWsState(state, text) {
+            wsPill.className = `ws-pill ${state}`;
+            wsStatus.textContent = text;
+        }
+
+        function isPredictionError(action) {
+            const normalized = String(action || "").trim().toLowerCase();
+            return normalized === "predict_error" || normalized === "no_model" || normalized === "error";
+        }
+
+        function statusForGroup(data) {
+            if (isPredictionError(data?.action)) return "error";
+            const status = String(data?.status || "waiting").toLowerCase();
+            return ["online", "partial", "waiting"].includes(status) ? status : "waiting";
+        }
+
+        function setStatusChip(id, status) {
+            const element = document.getElementById(id);
+            if (!element) return;
+            element.textContent = status;
+            element.className = `status-chip ${status}`;
+        }
+
+        function renderDeviceDots(id, onlineDevices, totalDevices, status) {
+            const element = document.getElementById(id);
+            if (!element) return;
+            const online = Math.max(0, Math.floor(toFiniteNumber(onlineDevices) || 0));
+            const total = Math.max(0, Math.floor(toFiniteNumber(totalDevices) || 3));
+            element.innerHTML = "";
+            for (let index = 0; index < total; index += 1) {
+                const dot = document.createElement("span");
+                dot.className = "device-dot";
+                if (index < online) dot.classList.add(status === "partial" ? "partial" : "online");
+                element.appendChild(dot);
+            }
+        }
+
+        function setConfidenceBar(id, value) {
+            const element = document.getElementById(id);
+            if (!element) return;
+            element.style.width = `${confidencePercent(value)}%`;
+        }
+
+        function predictionState(data, status) {
+            if (isPredictionError(data?.action)) return "Error";
+            if (data?.prediction_pending) return "Running";
+            if (status === "online" && data?.action) return "Ready";
+            if (status === "partial") return "Partial";
+            return "Waiting";
+        }
+
+        function updateGroup(source, group) {
+            const prefix = source === "esp" ? "esp" : "asus";
+            const data = group || { status: "waiting" };
+            const status = statusForGroup(data);
+            const total = toFiniteNumber(data.total_devices) ?? 3;
+            const online = toFiniteNumber(data.online_devices) ?? 0;
+            const card = document.getElementById(`${prefix}ResultCard`);
+
+            setStatusChip(`${prefix}Status`, status);
+            setText(`${prefix}Action`, data.action);
+            setText(`${prefix}Confidence`, fmtConfidence(data.confidence));
+            setConfidenceBar(`${prefix}ConfidenceBar`, data.confidence);
+            setText(`${prefix}Latency`, fmtLatency(data.latency_ms));
+            setText(`${prefix}UpdatedAt`, data.web_updated_at);
+            setText(`${prefix}InputTimestamp`, data.input_timestamp_text);
+            setText(`${prefix}OnlineDevices`, `${online}/${total}`);
+            setText(`${prefix}Pending`, predictionState(data, status));
+            renderDeviceDots(`${prefix}DeviceDots`, online, total, status);
+
+            if (card) card.classList.toggle("is-error", status === "error");
+        }
+
+        function makeConfidenceCell(value, source) {
+            const cell = document.createElement("td");
+            const number = toFiniteNumber(value);
+            if (number === null) {
+                cell.textContent = "--";
+                return cell;
+            }
+
+            const wrapper = document.createElement("span");
+            wrapper.className = "confidence-mini";
+
+            const track = document.createElement("span");
+            track.className = "confidence-mini-track";
+            const fill = document.createElement("span");
+            fill.className = "confidence-mini-fill";
+            fill.style.width = `${confidencePercent(number)}%`;
+            if (source === "asus") fill.style.background = "var(--violet)";
+            track.appendChild(fill);
+
+            const label = document.createElement("span");
+            label.textContent = fmtConfidence(number);
+            wrapper.append(track, label);
+            cell.appendChild(wrapper);
+            return cell;
+        }
+
+        function renderHistory(history) {
+            const tbody = document.getElementById("historyBody");
+            const rows = [...(Array.isArray(history) ? history : [])].reverse();
+            tbody.innerHTML = "";
+            historyCount.textContent = `${rows.length} bản ghi`;
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr class="empty-history"><td colspan="6">Chưa có dữ liệu dự đoán.</td></tr>';
+                return;
+            }
+
+            for (const row of rows) {
+                const tr = document.createElement("tr");
+                const source = String(row.source || "").toLowerCase();
+
+                const dateCell = document.createElement("td");
+                dateCell.textContent = fmtValue(row.web_updated_at);
+                tr.appendChild(dateCell);
+
+                const sourceCell = document.createElement("td");
+                const sourceBadge = document.createElement("span");
+                sourceBadge.className = `source-badge ${source === "asus" ? "asus" : "esp"}`;
+                sourceBadge.textContent = source.toUpperCase() || "--";
+                sourceCell.appendChild(sourceBadge);
+                tr.appendChild(sourceCell);
+
+                const inputCell = document.createElement("td");
+                inputCell.textContent = fmtValue(row.input_timestamp_text);
+                tr.appendChild(inputCell);
+
+                const actionCell = document.createElement("td");
+                const actionText = document.createElement("span");
+                actionText.className = `history-action${isPredictionError(row.action) ? " error" : ""}`;
+                actionText.textContent = fmtValue(row.action);
+                actionCell.appendChild(actionText);
+                tr.appendChild(actionCell);
+
+                tr.appendChild(makeConfidenceCell(row.confidence, source));
+
+                const latencyCell = document.createElement("td");
+                latencyCell.textContent = fmtLatency(row.latency_ms);
+                tr.appendChild(latencyCell);
+
+                tbody.appendChild(tr);
+            }
+        }
+
+        function handleMessage(message) {
+            const snapshot = message?.snapshot || message || {};
+            updateGroup("esp", snapshot.esp);
+            updateGroup("asus", snapshot.asus);
+            renderHistory(snapshot.history);
+        }
+
+        function connectWebSocket() {
+            const scheme = location.protocol === "https:" ? "wss://" : "ws://";
+            const ws = new WebSocket(`${scheme}${location.host}/ws`);
+            let pingTimer = null;
+
+            setWsState("connecting", "Đang kết nối WebSocket...");
+
+            ws.onopen = () => {
+                setWsState("connected", "WebSocket đã kết nối");
+                pingTimer = setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) ws.send("ping");
+                }, 3000);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    handleMessage(JSON.parse(event.data));
+                } catch (error) {
+                    console.error("WebSocket JSON error:", error);
+                }
+            };
+
+            ws.onerror = () => setWsState("error", "WebSocket gặp lỗi");
+
+            ws.onclose = () => {
+                if (pingTimer) clearInterval(pingTimer);
+                setWsState("disconnected", "Mất kết nối, đang kết nối lại...");
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
+
+        function setVideoEmpty(isVisible) {
+            videoEmpty.classList.toggle("hidden", !isVisible);
+        }
+
+        function stopCurrentCamera() {
+            if (currentCameraStream) {
+                currentCameraStream.getTracks().forEach((track) => track.stop());
+                currentCameraStream = null;
+            }
+            cameraVideo.pause();
+            cameraVideo.srcObject = null;
+            setVideoEmpty(true);
+        }
+
+        function cameraLabel(deviceId) {
+            const camera = availableCameras.find((item) => item.deviceId === deviceId);
+            return camera?.label || "Camera đã chọn";
+        }
+
+        async function showSelectedCamera(deviceId) {
+            stopCurrentCamera();
+            cameraError.textContent = "";
+
+            if (!deviceId) {
+                cameraStatus.textContent = "Chưa chọn camera.";
+                return;
+            }
+
+            try {
+                cameraStatus.textContent = "Đang mở camera...";
+                currentCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        deviceId: { exact: deviceId },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                    },
+                    audio: false,
+                });
+
+                const track = currentCameraStream.getVideoTracks()[0];
+                if (!track) throw new Error("Browser không nhận được video track từ camera.");
+
+                track.addEventListener("ended", () => {
+                    cameraStatus.textContent = "Camera đã bị ngắt hoặc đang được ứng dụng khác sử dụng.";
+                    setVideoEmpty(true);
+                });
+
+                cameraVideo.srcObject = currentCameraStream;
+                await cameraVideo.play();
+                setVideoEmpty(false);
+                cameraStatus.textContent = `Đang hiển thị: ${cameraLabel(deviceId)}`;
+            } catch (error) {
+                stopCurrentCamera();
+                cameraStatus.textContent = "Không thể hiển thị camera.";
+                cameraError.textContent = `Không mở được camera: ${error.name || "Error"} - ${error.message}`;
+            }
+        }
+
+        function populateCameraSelect(cameras, selectedDeviceId) {
+            cameraSelect.innerHTML = "";
+
+            const none = document.createElement("option");
+            none.value = "";
+            none.textContent = "Không hiển thị camera";
+            cameraSelect.appendChild(none);
+
+            cameras.forEach((camera, index) => {
+                const option = document.createElement("option");
+                option.value = camera.deviceId;
+                option.textContent = camera.label || `Camera ${index + 1}`;
+                option.selected = camera.deviceId === selectedDeviceId;
+                cameraSelect.appendChild(option);
+            });
+        }
+
+        async function initializeCameraSelector() {
+            if (!navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.enumerateDevices) {
+                cameraStatus.textContent = "Browser không hỗ trợ camera API.";
+                cameraError.textContent = "Trình duyệt không hỗ trợ truy cập camera.";
+                return;
+            }
+
+            try {
+                const permissionStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                permissionStream.getTracks().forEach((track) => track.stop());
+
+                availableCameras = (await navigator.mediaDevices.enumerateDevices())
+                    .filter((device) => device.kind === "videoinput");
+
+                if (!availableCameras.length) {
+                    cameraStatus.textContent = "Không tìm thấy camera.";
+                    cameraError.textContent = "Không tìm thấy camera trên máy đang mở dashboard.";
+                    return;
+                }
+
+                const firstCameraId = availableCameras[0].deviceId;
+                populateCameraSelect(availableCameras, firstCameraId);
+                cameraStatus.textContent = `Đã tìm thấy ${availableCameras.length} camera.`;
+
+                cameraSelect.addEventListener("change", () => {
+                    cameraError.textContent = "";
+                    if (!cameraSelect.value) {
+                        stopCurrentCamera();
+                        cameraStatus.textContent = "Đã tắt hiển thị camera.";
+                    } else {
+                        cameraStatus.textContent = "Đã đổi lựa chọn. Nhấn Mở để hiển thị.";
+                    }
+                });
+
+                openCameraBtn.addEventListener("click", () => showSelectedCamera(cameraSelect.value));
+                stopCameraBtn.addEventListener("click", () => {
+                    stopCurrentCamera();
+                    cameraStatus.textContent = "Đã tắt camera.";
+                    cameraError.textContent = "";
+                });
+
+                await showSelectedCamera(firstCameraId);
+            } catch (error) {
+                cameraStatus.textContent = "Không thể khởi tạo camera.";
+                cameraError.textContent = `Không thể lấy danh sách camera: ${error.name || "Error"} - ${error.message}`;
+            }
+        }
+
+        window.addEventListener("beforeunload", stopCurrentCamera);
+
+        connectWebSocket();
+        initializeCameraSelector();
+    </script>
+</body>
+</html>

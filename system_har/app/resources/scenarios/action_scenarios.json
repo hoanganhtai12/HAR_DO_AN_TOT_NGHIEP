@@ -1,0 +1,95 @@
+
+[
+  {
+    "scenario": "sitdown_standup",
+    "actions": [
+      {
+        "order": 1,
+        "voice_file": "sit_down.wav",
+        "action_name": "sitdown",
+        "duration_sec": 5
+      },
+      {
+        "order": 2,
+        "voice_file": "stand_up.wav",
+        "action_name": "standup",
+        "duration_sec": 5
+      }
+    ]
+  },
+  {
+    "scenario": "pickup_fall_liestill",
+    "actions": [
+      {
+        "order": 1,
+        "voice_file": "pick_up.wav",
+        "action_name": "pickup",
+        "duration_sec": 5
+      },
+      {
+        "order": 2,
+        "voice_file": "fall.wav",
+        "action_name": "fall",
+        "duration_sec": 5
+      },
+      {
+        "order": 3,
+        "voice_file": "lie_still.wav",
+        "action_name": "liestill",
+        "duration_sec": 5
+      },
+      {
+        "order": 4,
+        "voice_file": "prepare_again.wav",
+        "action_name": "prepareagain",
+        "duration_sec": 7
+      }
+    ]
+  },
+  {
+    "scenario": "run",
+    "actions": [
+      {
+        "order": 1,
+        "voice_file": "run.wav",
+        "action_name": "run",
+        "duration_sec": 5
+      },
+      {
+        "order": 2,
+        "voice_file": "prepare_again.wav",
+        "action_name": "prepareagain",
+        "duration_sec": 9
+      }
+    ]
+  },
+  {
+    "scenario": "walk",
+    "actions": [
+      {
+        "order": 1,
+        "voice_file": "walk.wav",
+        "action_name": "walk",
+        "duration_sec": 5
+      },
+      {
+        "order": 2,
+        "voice_file": "prepare_again.wav",
+        "action_name": "prepareagain",
+        "duration_sec": 9
+      }
+    ]
+  },
+  {
+    "scenario": "emptyroom",
+    "actions": [
+      {
+        "order": 1,
+        "voice_file": "empty_room.wav",
+        "action_name": "emptyroom",
+        "duration_sec": 5
+      }
+    ]
+  }
+]
+
